@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Thí nghiệm 3D: Tốc độ trung bình của phản ứng phân huỷ H₂O₂</title>
+<style>
+:root{--bg:#0d1520;--p:#13202f;--p2:#1a2b40;--ln:#27405c;--tx:#e8eef6;--mu:#92a6bd;--ac:#35c2a1;--a2:#f0a04b;--bd:#ef6a6a;--ok:#4cd08a;--lw:246px;--rw:330px}
+*{box-sizing:border-box}html,body{height:100%;margin:0;background:var(--bg);color:var(--tx);font:14px "Segoe UI",Roboto,Arial,sans-serif;overflow:hidden}
+button{font:inherit;font-size:13px;cursor:pointer}
+#cv{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab}
+/* thanh trên */
+#top{position:fixed;left:0;right:0;top:0;height:42px;display:flex;align-items:center;justify-content:space-between;padding:0 10px;background:rgba(10,18,28,.92);border-bottom:1px solid var(--ln);z-index:7;gap:8px}
+#top .ttl{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;font-size:14px}
+#top .grp{display:flex;gap:6px;align-items:center;flex-shrink:0}
+#top input{background:#08111b;border:1px solid var(--ln);color:#fff;border-radius:8px;padding:4px 8px;width:140px;font-size:13px}
+.sc{background:var(--p2);border:1px solid var(--ln);padding:2px 10px;border-radius:16px;white-space:nowrap;font-size:12.5px}.sc b{color:var(--ac)}
+.tg{background:var(--p2);border:1px solid var(--ln);color:var(--mu);border-radius:8px;padding:4px 9px;font-size:12.5px;white-space:nowrap}
+.tg.on{border-color:var(--ac);color:var(--ac)}.tg:hover{border-color:var(--ac)}
+/* bảng hai bên */
+.pn{position:fixed;background:rgba(19,32,47,.94);border:1px solid var(--ln);border-radius:12px;display:flex;flex-direction:column;min-height:0;z-index:5;transition:transform .25s,opacity .25s}
+.ph{display:flex;justify-content:space-between;align-items:center;padding:5px 6px 5px 10px;border-bottom:1px solid var(--ln);font-weight:700;font-size:13px;gap:6px}
+.ph button{padding:1px 8px}
+#lp{left:10px;top:50px;width:226px;max-height:calc(100vh - 124px)}
+#rp{right:10px;top:50px;width:310px;max-height:calc(100vh - 124px)}
+#lp.hid{transform:translateX(-120%);opacity:0;pointer-events:none}#rp.hid{transform:translateX(120%);opacity:0;pointer-events:none}
+.hdl{position:fixed;top:56px;z-index:6;display:none;background:rgba(19,32,47,.94);border:1px solid var(--ln);color:var(--ac);padding:8px 7px;font-size:15px}
+#hl{left:0;border-radius:0 10px 10px 0;border-left:0}#hr{right:0;border-radius:10px 0 0 10px;border-right:0}
+.body{overflow-y:auto;padding:7px 8px;min-height:0;flex:1}
+.stp{border:1px solid var(--ln);border-radius:8px;background:#101d2c;padding:5px 8px;margin-bottom:5px;display:flex;gap:7px;align-items:center;cursor:pointer;font-size:12.8px;line-height:1.3}
+.stp .si{width:20px;height:20px;border-radius:50%;border:1.5px solid var(--mu);display:grid;place-items:center;font-size:11px;flex:none;color:var(--mu)}
+.stp.done .si{background:var(--ok);border-color:var(--ok);color:#04231b}.stp.cur{border-color:var(--ac)}.stp.cur .si{border-color:var(--ac);color:var(--ac)}.stp.lock{opacity:.5}.stp.view{background:#16384a}
+.tabs{display:flex;border-bottom:1px solid var(--ln)}.tabs button{flex:1;background:none;border:0;color:var(--mu);padding:6px 2px;border-bottom:2px solid transparent;font-size:12.5px}
+.tabs button.on{color:var(--ac);border-bottom-color:var(--ac);font-weight:700}
+/* thẻ thuyết minh */
+#info{position:fixed;top:50px;left:calc(var(--lw) + (100vw - var(--lw) - var(--rw))/2);transform:translateX(-50%);width:min(540px,calc(100vw - var(--lw) - var(--rw) - 24px));min-width:240px;background:rgba(19,32,47,.94);border:1px solid var(--ln);border-radius:12px;z-index:5;font-size:12.8px;transition:left .25s,width .25s}
+#info.hid{display:none}
+#info .ih{display:flex;align-items:center;gap:6px;padding:4px 6px 4px 12px}
+#info .ih b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#fff}
+#info .ic{padding:1px 8px}
+#info .ib{padding:7px 12px 9px;max-height:28vh;overflow-y:auto;line-height:1.55;color:#c9d6e5;border-top:1px solid var(--ln)}
+#info.col .ib{display:none}
+.eq{margin:5px 0;padding:5px 8px;background:#08111b;border-radius:6px;font-family:Cambria,"Times New Roman",serif;font-size:13.5px;color:#ffe3a8}
+.tk{display:flex;gap:8px;align-items:center;padding:6px 8px;border:1px solid var(--ln);border-radius:8px;margin-bottom:5px;background:#101d2c;font-size:12.8px}
+.tk i{width:20px;height:20px;border-radius:50%;border:1.5px solid var(--mu);display:grid;place-items:center;font-style:normal;flex:none;font-size:11px}
+.tk.ok{border-color:var(--ok)}.tk.ok i{background:var(--ok);border-color:var(--ok);color:#04231b}
+.q{border:1px solid var(--ln);border-radius:10px;background:#101d2c;padding:8px;margin-bottom:8px}.q.okq{border-color:var(--ok)}.q.nq{border-color:var(--bd)}
+.qh{font-size:11.5px;margin-bottom:3px;color:var(--ac);font-weight:700}.qt{line-height:1.45;margin-bottom:5px;font-size:13px}
+.opt{display:block;width:100%;text-align:left;margin:3px 0;background:#0f1b2a;color:var(--tx);border:1px solid var(--ln);border-radius:8px;padding:5px 8px;line-height:1.35;font-size:12.8px}
+.opt:hover:not(:disabled){border-color:var(--ac)}.opt.ok{border-color:var(--ok);background:#12362a}.opt.bad{border-color:var(--bd);background:#3a1a1a}
+.ex{margin-top:5px;padding:5px 8px;border-radius:7px;font-size:12.3px;line-height:1.5}.ex.g{background:#12362a;color:#bdf0d3}.ex.r{background:#3a1c1c;color:#ffc9c9}
+.tfi{border:1px solid var(--ln);border-radius:8px;padding:6px 8px;margin:5px 0;background:#0f1b2a}.tfi.ok{border-color:var(--ok)}.tfi.bad{border-color:var(--bd)}
+.tft{line-height:1.4;margin-bottom:5px;font-size:12.8px}.tfb{display:flex;gap:6px}.tfb button{background:var(--p2);color:var(--tx);border:1px solid var(--ln);border-radius:6px;padding:3px 14px}
+.tfb button.sel{background:var(--ac);color:#03241b;border-color:var(--ac);font-weight:700}.tfb button:disabled{cursor:default}
+.tfc{margin-top:6px}.qh .ty{color:var(--mu);font-weight:400;margin-left:6px}
+.btn{background:var(--p2);color:var(--tx);border:1px solid var(--ln);border-radius:8px;padding:6px 11px}
+.btn:hover:not(:disabled){border-color:var(--ac)}.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.pri{background:var(--ac);border-color:var(--ac);color:#03241b;font-weight:700}.btn.warn{border-color:var(--a2);color:var(--a2)}.btn.on{border-color:var(--ac);color:var(--ac)}
+#ctrl{position:fixed;left:10px;right:10px;bottom:10px;min-height:46px;background:rgba(19,32,47,.94);border:1px solid var(--ln);border-radius:12px;padding:6px 10px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;z-index:5}
+#ctrl .sp{flex:1}
+#eqb{position:fixed;left:50%;bottom:68px;transform:translateX(-50%);display:none;background:rgba(10,18,28,.94);border:1px solid var(--a2);border-radius:10px;padding:5px 14px;font-family:Cambria,"Times New Roman",serif;font-size:14px;color:#ffe3a8;z-index:5;text-align:center;line-height:1.55}
+#toast{position:fixed;left:50%;top:100px;transform:translateX(-50%);background:#0a121c;border:1px solid var(--a2);color:#ffe3a8;padding:7px 14px;border-radius:20px;opacity:0;transition:opacity .3s;pointer-events:none;font-size:13px;z-index:9}
+#nogl{position:fixed;left:20%;right:20%;top:45%;text-align:center;color:var(--a2);padding:12px;background:#0a121c;border:1px solid var(--ln);border-radius:10px;z-index:4}
+.rs input{background:#08111b;border:1px solid var(--ln);color:#fff;border-radius:8px;padding:6px 9px;width:100%;margin:4px 0 8px}
+.hi{border:1px solid var(--ln);border-radius:8px;padding:5px 8px;margin:5px 0;font-size:12.3px;background:#0f1b2a}
+pre{white-space:pre-wrap;background:#08111b;padding:8px;border-radius:8px;font-size:12.3px;margin:6px 0}
+@media(max-width:900px){#top input{width:100px}#top .ttl{display:none}#top{justify-content:flex-end}}
+.sar{display:flex;gap:6px;margin:4px 0}.sai{flex:1;min-width:0;background:#08111b;border:1px solid var(--ln);color:#fff;border-radius:8px;padding:5px 8px;font-size:13px}.sl{font-size:12.5px;color:var(--mu);display:inline-flex;align-items:center;gap:6px}.sl b{color:var(--ac)}.sl input[type=range]{width:180px}</style></head>
+<body>
+<canvas id="cv"></canvas>
+<div id="top"><div class="ttl">Thí nghiệm 3D: Tốc độ trung bình của phản ứng phân huỷ H₂O₂</div>
+<div class="grp"><input id="stu" placeholder="Họ tên học sinh" maxlength="40">
+<span class="sc" id="ckw" style="display:none">Đun: <b id="ck">0</b> phút</span><span class="sc" id="mc" style="display:none"></span><span class="sc">Điểm <b id="sc">0</b>/<span id="mx">13</span></span>
+<button class="tg on" id="tgl" title="Ẩn/hiện bảng các bước">☰ Các bước</button><button class="tg on" id="tgi" title="Ẩn/hiện thuyết minh">ⓘ Thuyết minh</button><button class="tg on" id="tgr" title="Ẩn/hiện bảng học tập">📚 Học tập</button><button class="tg" id="tga" title="Ẩn hoặc khôi phục toàn bộ bảng">⛶ Toàn cảnh</button></div></div>
+<div id="lp" class="pn"><div class="ph"><span>Các bước</span><button class="btn" id="tl" title="Ẩn bảng">✕</button></div><div class="body" id="stl"></div></div>
+<div id="rp" class="pn"><div class="ph"><span>Học tập</span><button class="btn" id="tr" title="Ẩn bảng">✕</button></div>
+<div class="tabs"><button data-t="tk" class="on">Nhiệm vụ</button><button data-t="qz">Câu hỏi</button><button data-t="rs">Kết quả</button></div>
+<div class="body" id="rb"></div></div>
+<div id="info"><div class="ih"><b id="it"></b><button class="btn ic" id="ic" title="Thu gọn / mở rộng">▾</button><button class="btn ic" id="ix" title="Ẩn thuyết minh">✕</button></div><div class="ib" id="ibd"></div></div>
+<button class="hdl" id="hl" title="Hiện bảng các bước">☰</button><button class="hdl" id="hr" title="Hiện bảng học tập">📚</button>
+<div id="eqb"></div>
+<div id="ctrl"></div>
+<div id="toast"></div><div id="nogl" hidden></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+'use strict';
+const $=id=>document.getElementById(id);
+const clamp=(x,a,b)=>Math.min(b,Math.max(a,x));
+const lerp=(a,b,t)=>a+(b-a)*t;
+const ease=t=>t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
+const rnd=(a,b)=>a+Math.random()*(b-a);
+const fp=n=>String(Math.round(n*100)/100).replace('.',',');
+const f3=n=>(Math.round(n*1000+1e-9)/1000).toFixed(3).replace('.',',');
+const KEY='ddhoa-vtb-h2o2-v1',HKEY='ddhoa-vtb-h2o2-hist',UKEY='ddhoa-vtb-h2o2-ui';
+let HAS3D=false,booted=false,tm=0,tab='tk',showL=true,FF=1;
+const TV=[0,3,6,9,12],CV=[1,.707,.5,.354,.25];
+const INTV=[[0,1],[1,2],[2,3],[3,4],[0,2],[0,4]];
+const Cf=t=>Math.pow(2,-t/6);
+const vt=(i,j)=>-(CV[j]-CV[i])/(TV[j]-TV[i]);
+const ILB=INTV.map(p=>TV[p[0]]+' → '+TV[p[1]]+' h');
+const TD='border:1px solid #4a5a6c;padding:2px 6px';
+const STEPS=[
+{k:'prep',t:'Chuẩn bị: phản ứng và số liệu',d:'<b>Phản ứng nghiên cứu (SGK, Bảng 19.1):</b><div class="eq">H₂O₂ → H₂O + ½O₂</div>H₂O₂ (hydrogen peroxide) tự phân huỷ chậm tạo nước và khí oxygen.<br><b>Mục đích:</b> hiểu cách xác định tốc độ trung bình của phản ứng từ sự biến thiên nồng độ theo thời gian; thấy tốc độ giảm dần khi nồng độ chất phản ứng giảm.<br><b>Số liệu:</b><table style="border-collapse:collapse;margin:4px 0;font-size:12px"><tr><td style="'+TD+'">t (h)</td><td style="'+TD+'">0</td><td style="'+TD+'">3</td><td style="'+TD+'">6</td><td style="'+TD+'">9</td><td style="'+TD+'">12</td></tr><tr><td style="'+TD+'">C(H₂O₂) mol/L</td><td style="'+TD+'">1,000</td><td style="'+TD+'">0,707</td><td style="'+TD+'">0,500</td><td style="'+TD+'">0,354</td><td style="'+TD+'">0,250</td></tr></table><div class="eq">v_tb = −ΔC/Δt = −(C₂ − C₁)/(t₂ − t₁)</div><i>Bình, bọt khí và đồ thị trong mô phỏng minh hoạ bảng số liệu: nồng độ vẽ theo đường cong C = 2^(−t/6) đi qua đúng 5 điểm của bảng (đường cong là phần tôi bổ sung). Bạn đối chiếu với sách.</i>'},
+{k:'data',t:'Đo nồng độ H₂O₂ tại 5 thời điểm',d:'Bấm lần lượt <b>“Đo tại t = …”</b> cho 5 thời điểm 0, 3, 6, 9, 12 h: thời gian chạy tới mốc đó, màu dung dịch nhạt dần (nồng độ giảm) và điểm tương ứng hiện trên đồ thị. Có thể kéo thanh trượt để xem thời điểm bất kì.<br><b>Nhận xét từ bảng:</b> nồng độ giảm dần theo thời gian; sau mỗi 6 giờ nồng độ giảm một nửa (1,000 → 0,500 → 0,250).<br><i>Cách đo thực tế (chuẩn độ mẫu bằng KMnO₄ trong môi trường acid) là kiến thức bổ sung, không có trong ảnh sách; bạn đối chiếu xem sách có nêu không.</i>'},
+{k:'calc',t:'Tính tốc độ trung bình trong 0 → 3 giờ',d:'<b>Theo sách:</b><br>Bước 1: biến thiên nồng độ trong 0 → 3 h: <b>ΔC = 0,707 − 1,000 = −0,293 mol/L</b> (dấu “−” cho biết nồng độ giảm).<br>Bước 2: <div class="eq">v_tb = −ΔC/Δt = −(0,707 − 1,000)/(3 − 0) = 0,293/3 ≈ 0,098 mol/(L·h)</div>Đặt dấu “−” trước biểu thức để tốc độ phản ứng có giá trị dương.<br>Bấm lần lượt “Bước 1” rồi “Bước 2”; đường thẳng nối hai điểm trên đồ thị (cát tuyến) hiện ra.'},
+{k:'tab',t:'Tính cho các khoảng thời gian khác',d:'Bấm từng khoảng để tính v_tb và xem cát tuyến: 0 → 3, 3 → 6, 6 → 9, 9 → 12, 0 → 6, 0 → 12 h. Khi tính đủ 6 khoảng, bước hoàn thành.<br><b>Nhận xét:</b> v_tb giảm dần theo thời gian (0,098 → 0,069 → 0,049 → 0,035) vì nồng độ H₂O₂ giảm. Giá trị tính trên khoảng dài (0 → 12 h) chỉ là trung bình, không cho biết tốc độ tại một thời điểm cụ thể.'},
+{k:'gr',t:'Đọc đồ thị: độ dốc và thời gian giảm một nửa',d:'Trên đồ thị nồng độ theo thời gian, đường cong đi xuống và thoải dần; độ dốc (tốc độ) lớn ở đầu rồi nhỏ dần. Trả lời hai câu bằng cách bấm đáp án:<br>• Khoảng nào có tốc độ trung bình lớn nhất?<br>• Sau bao lâu nồng độ giảm còn một nửa (0,500 mol/L)?<br><i>“Thời gian bán huỷ” và nhận xét tốc độ tỉ lệ nồng độ (phản ứng bậc 1, tỉ số khoảng 0,115 h⁻¹) là kiến thức bổ sung vượt chương trình phổ thông, không có trong ảnh.</i>'},
+{k:'mol',t:'Mô hình phân tử: số phân tử H₂O₂ giảm dần',d:'Hộp có 40 phân tử H₂O₂ ở t = 0 (số phân tử vẽ tỉ lệ với nồng độ: 40 × C). Bấm “Chạy 0 → 12 h”: số phân tử H₂O₂ giảm dần, khí O₂ tạo ra, các va chạm thưa dần.<br><b>Giải thích:</b> nồng độ giảm nên số hạt trong một đơn vị thể tích ít đi, tốc độ phản ứng giảm.<br><i>Mô hình đơn giản hoá: chuyển động ngẫu nhiên, số va chạm hiển thị chỉ là ước lượng minh hoạ xu hướng giảm; không mô tả cơ chế thật của phản ứng.</i>'},
+{k:'sa',t:'Bài tập trả lời ngắn (13 câu)',d:'Mở tab <b>Câu hỏi</b> bên phải: 13 câu trả lời ngắn dùng số liệu Bảng 19.1 (gõ số hoặc từ khoá). Mỗi câu được chấm hai lần thử; có nút <b>Gợi ý</b>; sau khi chấm có lời giải. Sai số làm tròn nhỏ vẫn được chấp nhận (ví dụ 0,0417 hoặc 0,042). Làm đúng ít nhất 10/13 câu để hoàn thành nhiệm vụ.<br><i>Câu 10, 11, 12 là phần vận dụng và mở rộng, không có trong ảnh: câu 10 coi nồng độ giảm theo quy luật gần đúng của bảng; câu 12 giả sử thể tích dung dịch không đổi và dùng 24,79 L/mol (25 °C, 1 bar); nếu dùng 22,4 L/mol (đktc) thì đáp án khoảng 0,66 L. Bạn chọn theo sách.</i>'},
+{k:'sum',t:'Tổng kết',d:'<b>Kết luận:</b> tốc độ trung bình của phản ứng được tính bằng độ giảm nồng độ chất phản ứng trong một đơn vị thời gian: <b>v_tb = −ΔC/Δt</b>. Với phân huỷ H₂O₂, v_tb giảm dần theo thời gian vì nồng độ H₂O₂ giảm.<table style="border-collapse:collapse;margin:4px 0;font-size:12px"><tr><td style="'+TD+'">Khoảng (h)</td><td style="'+TD+'">ΔC</td><td style="'+TD+'">v_tb mol/(L·h)</td></tr><tr><td style="'+TD+'">0 → 3</td><td style="'+TD+'">−0,293</td><td style="'+TD+'">0,098</td></tr><tr><td style="'+TD+'">3 → 6</td><td style="'+TD+'">−0,207</td><td style="'+TD+'">0,069</td></tr><tr><td style="'+TD+'">6 → 9</td><td style="'+TD+'">−0,146</td><td style="'+TD+'">0,049</td></tr><tr><td style="'+TD+'">9 → 12</td><td style="'+TD+'">−0,104</td><td style="'+TD+'">0,035</td></tr><tr><td style="'+TD+'">0 → 6</td><td style="'+TD+'">−0,500</td><td style="'+TD+'">0,083</td></tr><tr><td style="'+TD+'">0 → 12</td><td style="'+TD+'">−0,750</td><td style="'+TD+'">0,063</td></tr></table><b>Lưu ý:</b> luôn kiểm tra đơn vị mol/(L·h); nếu viết 2H₂O₂ → 2H₂O + O₂ thì định nghĩa tốc độ có thể kèm hệ số chia (bài này SGK tính theo H₂O₂ với hệ số 1).'}
+];
+const STEPKEY=STEPS.map(s=>s.k);
+const TASKS=[
+ {k:'a',t:'Đo nồng độ H₂O₂ tại cả 5 thời điểm 0, 3, 6, 9, 12 h'},
+ {k:'b',t:'Tính v_tb trong 0 → 3 h theo hai bước (ΔC rồi v_tb)'},
+ {k:'c',t:'Tính v_tb cho đủ 6 khoảng thời gian'},
+ {k:'d',t:'Chọn đúng khoảng có tốc độ trung bình lớn nhất'},
+ {k:'e',t:'Xác định đúng thời gian nồng độ giảm một nửa'},
+ {k:'f',t:'Mô hình phân tử: chạy hết 0 → 12 h'},
+ {k:'g',t:'Trả lời ngắn: đúng ít nhất 10/13 câu'},
+ {k:'h',t:'Hoàn thành tổng kết'}
+];
+const norm=s=>String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/g,'d').replace(/\s+/g,' ').trim();
+const num=s=>{const m=String(s).replace(',','.').match(/-?\s*\d+(\.\d+)?/);return m?parseFloat(m[0].replace(/\s/g,'')):NaN;};
+const numChk=(a,tol,neg)=>s=>{const v=num(s);if(isNaN(v))return false;if(neg===true&&v>0)return false;if(neg===false&&v<0)return false;return Math.abs(v-a)<=tol;};
+const SA=[
+ {q:'Nồng độ H₂O₂ tại thời điểm 6 giờ là bao nhiêu mol/L?',u:'mol/L',chk:numChk(.5,.001),ans:'0,500 mol/L',h:'Đọc trực tiếp từ Bảng 19.1.',x:'Đọc trực tiếp từ bảng: 0,500 mol/L.'},
+ {q:'Biến thiên nồng độ H₂O₂ trong khoảng từ 3 giờ đến 6 giờ là bao nhiêu mol/L? (nhớ dấu)',u:'mol/L',chk:numChk(-.207,.0011,true),ans:'−0,207 mol/L',h:'ΔC = C(6 h) − C(3 h). Nồng độ giảm nên ΔC mang dấu gì?',x:'0,500 − 0,707 = −0,207 (dấu “−” vì nồng độ giảm).'},
+ {q:'Vì sao khi tính tốc độ phản ứng phải đặt dấu “−” trước biểu thức ΔC/Δt? (trả lời ngắn)',chk:s=>{const n=norm(s);return /duong/.test(n);},ans:'Để tốc độ phản ứng có giá trị dương',h:'ΔC của chất phản ứng luôn âm; muốn tốc độ mang dấu gì?',x:'ΔC của chất phản ứng luôn âm nên đặt dấu “−” để tốc độ có giá trị dương.'},
+ {q:'Đơn vị của tốc độ trung bình trong bài này là gì?',chk:s=>{const n=norm(s).replace(/[\s()·.*]/g,'');return /^mol\/lh$|^mol\/l\/h$|^molh-1l-1$|^moll-1h-1$/.test(n);},ans:'mol/(L·h)',h:'Nồng độ (mol/L) chia cho thời gian (h).',x:'Nồng độ (mol/L) chia thời gian (h) cho mol/(L·h).'},
+ {q:'Tính tốc độ trung bình trong khoảng từ 3 giờ đến 6 giờ (mol/(L·h), làm tròn 3 chữ số thập phân).',u:'mol/(L·h)',chk:numChk(.069,.0006),ans:'0,069',h:'v = −ΔC/Δt, ΔC = −0,207; Δt = 3 h.',x:'0,207/3 = 0,069 mol/(L·h).'},
+ {q:'Tính tốc độ trung bình trong khoảng từ 6 giờ đến 12 giờ (làm tròn 3 chữ số thập phân).',u:'mol/(L·h)',chk:numChk(.0417,.0006),ans:'0,042',h:'ΔC = 0,250 − 0,500; Δt = 12 − 6 = 6 h.',x:'(0,500 − 0,250)/6 = 0,0417 ≈ 0,042 mol/(L·h).'},
+ {q:'Tính tốc độ trung bình trong toàn bộ khoảng từ 0 giờ đến 12 giờ (làm tròn 3 chữ số thập phân).',u:'mol/(L·h)',chk:numChk(.0625,.0006),ans:'0,063',h:'ΔC = 0,250 − 1,000; Δt = 12 h.',x:'(1,000 − 0,250)/12 = 0,0625 ≈ 0,063 mol/(L·h).'},
+ {q:'Trong các khoảng 0 → 3, 3 → 6, 6 → 9, 9 → 12 h, khoảng nào có tốc độ trung bình lớn nhất? (gõ khoảng, ví dụ “6 → 9”)',chk:s=>{const d=String(s).replace(/[^0-9]/g,'');return d==='03'||d==='03h'||/\b0\b.*\b3\b/.test(s)&&!/6|9|12/.test(s);},ans:'0 → 3 h (v = 0,098)',h:'So sánh 0,098; 0,069; 0,049; 0,035: nồng độ lúc nào lớn nhất?',x:'Khoảng 0 → 3 h (v = 0,098): nồng độ ban đầu lớn nhất nên số va chạm hiệu quả nhiều nhất; sau đó nồng độ giảm nên tốc độ giảm.'},
+ {q:'Dựa vào quy luật trong bảng (cứ 6 giờ giảm một nửa), dự đoán nồng độ H₂O₂ tại 18 giờ (mol/L).',u:'mol/L',chk:numChk(.125,.001),ans:'0,125 mol/L',h:'Bảng: 12 h là 0,250; thêm 6 giờ nữa thì sao?',x:'Cứ 6 giờ giảm một nửa: 0,250 → 0,125 (tại 18 h).'},
+ {q:'Dựa vào quy luật (cứ 3 giờ nồng độ nhân với khoảng 0,707), dự đoán nồng độ H₂O₂ tại 15 giờ (làm tròn 3 chữ số thập phân).',u:'mol/L',chk:numChk(.177,.001),ans:'0,177 mol/L',h:'C(15 h) = C(12 h) × 0,707.',x:'0,250 × 0,707 ≈ 0,177 mol/L.'},
+ {q:'Tính tốc độ trung bình theo khí O₂ trong khoảng 0 → 3 giờ (mol/(L·h), làm tròn 3 chữ số thập phân).',u:'mol/(L·h)',chk:numChk(.0488,.0006),ans:'0,049',h:'H₂O₂ → H₂O + ½O₂: O₂ tạo ra bằng một nửa số mol H₂O₂ phản ứng.',x:'H₂O₂ phản ứng 0,293 mol/L tạo 0,1465 mol/L O₂; v(O₂) = 0,1465/3 ≈ 0,049 (bằng một nửa tốc độ tính theo H₂O₂).'},
+ {q:'Với 200 mL dung dịch H₂O₂ ban đầu, tính thể tích khí O₂ thoát ra sau 3 giờ đầu ở 25 °C, 1 bar (1 mol khí chiếm 24,79 L), làm tròn 2 chữ số thập phân (lít).',u:'lít',chk:numChk(.7264,.01),ans:'0,73 lít',h:'n(H₂O₂ phản ứng) = 0,293 × 0,2 mol; n(O₂) bằng một nửa.',x:'n(H₂O₂ phản ứng) = 0,293 × 0,2 = 0,0586 mol; n(O₂) = 0,0293 mol; V = 0,0293 × 24,79 ≈ 0,73 L. (Dùng 22,4 L/mol thì ≈ 0,66 L.)'},
+ {q:'Nêu hai biện pháp làm tăng tốc độ phân huỷ H₂O₂.',chk:s=>{const n=norm(s);let k=0;if(/nhiet/.test(n))k++;if(/xuc tac|mno2|mno₂/.test(n))k++;if(/nong do/.test(n))k++;return k>=2;},ans:'Ví dụ: tăng nhiệt độ, thêm chất xúc tác (như MnO₂), tăng nồng độ H₂O₂',h:'Các yếu tố ảnh hưởng đến tốc độ phản ứng: nhiệt độ, chất xúc tác, nồng độ.',x:'Ví dụ: tăng nhiệt độ, thêm chất xúc tác (như MnO₂), tăng nồng độ H₂O₂.'}
+];
+const QZ=SA.map(o=>Object.assign({t:'sa'},o));
+let ST,QA=QZ.map(()=>({val:'',tries:0,ok:false,done:false,hint:false}));
+function newST(keep){return{step:0,done:STEPS.map(()=>false),view:0,tk:keep?keep.tk:{},stu:keep?keep.stu:'',tw:{},job:0,
+ mol:false,tt:0,tsel:0,meas:[false,false,false,false,false],calc1:0,seen:{},gans:[-1,-1],gdone:[false,false],
+ rx:0,rxPlay:false,rxDone:false,
+ msg:'',eq:'',warn:''};}
+ST=newST(null);
+function load(){try{const j=JSON.parse(localStorage.getItem(KEY)||'null');if(j){QA.forEach((d,i)=>{if(j.qa&&j.qa[i])Object.assign(d,j.qa[i]);});ST.stu=j.stu||'';ST.tk=j.tk||{};}}catch(e){}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify({qa:QA,stu:ST.stu,tk:ST.tk}));}catch(e){}}
+const score=()=>QA.reduce((a,q)=>a+(q.ok?1:0),0);
+let R,SC,CAM,cvs,dummy,macro,mol,VK=-1;
+const cc={th:0,ph:1.38,r:36,tx:0,ty:.5,tz:0},tg=Object.assign({},cc);
+const VIEWS=[{th:0,ph:1.38,r:36,t:[0,.5,0]},{th:0,ph:1.45,r:30,t:[0,0,0]}];
+const M=(c,o)=>new THREE.MeshStandardMaterial(Object.assign({color:c,roughness:.55},o||{}));
+const GX0=-1.5,GY0=-4,GW=10,GH=8,FXP=-7,RB=2.6,RN=.8,HF=4.8,LH=3.6;
+const gx=t=>GX0+GW*t/12,gy=c=>GY0+GH*c;
+let flaskG,gG,LIQ,BUB=[],CURVE=[],GPT=[],CUR,SEC,SECV,SECH,labs={},MBOX,MH=[],MO=[],MLB;
+function rr(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath();}
+function drawLabel(cv,text,col){const c=cv.getContext('2d'),lines=String(text).split('\n'),fs=34,font='600 '+fs+'px "Segoe UI",Arial,sans-serif';
+ c.font=font;let w=0;lines.forEach(l=>{w=Math.max(w,c.measureText(l).width);});
+ cv.width=Math.ceil(w+36);cv.height=Math.ceil(lines.length*fs*1.25+22);
+ c.font=font;c.fillStyle='rgba(10,18,28,.84)';rr(c,2,2,cv.width-4,cv.height-4,14);c.fill();c.strokeStyle=col||'#35c2a1';c.lineWidth=3;c.stroke();
+ c.fillStyle='#fff';c.textBaseline='middle';lines.forEach((l,k)=>c.fillText(l,18,11+fs*.625+k*fs*1.25));}
+function lab(g,text,x,y,z,col,sc){const cv=document.createElement('canvas');drawLabel(cv,text,col);const tex=new THREE.CanvasTexture(cv);
+ const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,depthTest:false,transparent:true}));sp.renderOrder=10;const k=sc||.0100;sp.scale.set(cv.width*k,cv.height*k,1);sp.position.set(x,y,z);sp.userData.cv=cv;sp.userData.tex=tex;sp.userData.k=k;sp.userData.txt=text;sp.userData.col=col;g.add(sp);return sp;}
+function relab(sp,text,col){if(sp.userData.txt===text&&sp.userData.col===col)return;sp.userData.txt=text;sp.userData.col=col;drawLabel(sp.userData.cv,text,col);sp.userData.tex.needsUpdate=true;sp.scale.set(sp.userData.cv.width*sp.userData.k,sp.userData.cv.height*sp.userData.k,1);}
+function seg(m,x1,y1,x2,y2,th){const dx=x2-x1,dy=y2-y1,L=Math.hypot(dx,dy);m.scale.set(th,L,th);m.position.set((x1+x2)/2,(y1+y2)/2,0);m.rotation.z=Math.atan2(dy,dx)-Math.PI/2;}
+function buildMacro(){
+ const g=new THREE.Group();g.userData.labs=[];
+ flaskG=new THREE.Group();flaskG.position.set(FXP,-4,0);g.add(flaskG);
+ const tb=new THREE.Mesh(new THREE.BoxGeometry(9,.4,6),M(0x6b5238));tb.position.set(0,-.2,0);flaskG.add(tb);
+ const pts=[new THREE.Vector2(RB,0),new THREE.Vector2(RB,.25),new THREE.Vector2(RN,HF),new THREE.Vector2(RN,HF+1.6),new THREE.Vector2(RN+.18,HF+1.7)];
+ const gl=new THREE.Mesh(new THREE.LatheGeometry(pts,32),M(0xcfe8ff,{transparent:true,opacity:.22,roughness:.1,depthWrite:false,side:THREE.DoubleSide}));flaskG.add(gl);
+ LIQ=new THREE.Mesh(new THREE.CylinderGeometry(1,1,1,28),M(0x7ec8ff,{transparent:true,opacity:.55,roughness:.3,depthWrite:false}));
+ LIQ.scale.set(RB*.93,LH,RB*.93);LIQ.position.y=LH/2+.3;flaskG.add(LIQ);
+ for(let k=0;k<14;k++){const b=new THREE.Mesh(new THREE.SphereGeometry(.13,8,6),M(0xffffff,{transparent:true,opacity:.75}));b.visible=false;b.userData={ph:Math.random()*10,sp:rnd(.7,1.2),ox:rnd(-1,1)*1.5,oz:rnd(-1,1)*1.5};flaskG.add(b);BUB.push(b);}
+ labs.fl=lab(flaskG,'H₂O₂ 1,000 mol/L',0,HF+3.6,0,'#8ad8ff',.0090);
+ labs.o2=lab(flaskG,'',0,-1.8,2.2,'#c8d6e5',.0080);
+ gG=new THREE.Group();g.add(gG);
+ const ax=new THREE.Mesh(new THREE.BoxGeometry(GW+1,.12,.12),M(0xaab8c6));ax.position.set(GX0+GW/2,GY0,0);gG.add(ax);
+ const ay=new THREE.Mesh(new THREE.BoxGeometry(.12,GH+1,.12),M(0xaab8c6));ay.position.set(GX0,GY0+GH/2+.3,0);gG.add(ay);
+ for(let i=0;i<5;i++){lab(gG,String(TV[i]),gx(TV[i]),GY0-.9,0,'#8a99aa',.0075);}
+ [0,.5,1].forEach(c=>lab(gG,String(c).replace('.',','),GX0-1.1,gy(c),0,'#8a99aa',.0075));
+ lab(gG,'t (h)',GX0+GW+1.4,GY0-.2,0,'#8ad8ff',.0080);lab(gG,'C (mol/L)',GX0,GY0+GH+1.4,0,'#8ad8ff',.0080);
+ for(let k=0;k<48;k++){const s=new THREE.Mesh(new THREE.CylinderGeometry(1,1,1,6),M(0x4fc3ff,{emissive:0x1a6a99,emissiveIntensity:.7}));seg(s,gx(k*.25),gy(Cf(k*.25)),gx((k+1)*.25),gy(Cf((k+1)*.25)),.1);gG.add(s);CURVE.push(s);}
+ for(let i=0;i<5;i++){const p=new THREE.Mesh(new THREE.SphereGeometry(.34,14,10),M(0xffe08a,{emissive:0xffcc55,emissiveIntensity:.8}));p.position.set(gx(TV[i]),gy(CV[i]),.1);p.visible=false;gG.add(p);GPT.push(p);}
+ CUR=new THREE.Mesh(new THREE.SphereGeometry(.26,12,8),M(0xffffff,{emissive:0xffffff,emissiveIntensity:.9}));gG.add(CUR);
+ SEC=new THREE.Mesh(new THREE.CylinderGeometry(1,1,1,8),M(0xff7a7a,{emissive:0xcc3333,emissiveIntensity:.8}));SEC.visible=false;gG.add(SEC);
+ SECV=new THREE.Mesh(new THREE.CylinderGeometry(1,1,1,6),M(0xffa24a,{transparent:true,opacity:.7}));SECV.visible=false;gG.add(SECV);
+ SECH=new THREE.Mesh(new THREE.CylinderGeometry(1,1,1,6),M(0xb6e65a,{transparent:true,opacity:.7}));SECH.visible=false;gG.add(SECH);
+ labs.clk=lab(g,'⏱ t = 0 h',0,9.2,0,'#ffe08a',.0140);
+ labs.S=lab(g,'',0,7.6,0,'#c8d6e5',.0095);
+ labs.F=lab(g,'',0,-8.4,0,'#ffe08a',.0095);
+ labs.G=lab(gG,'',GX0+GW*.62,GY0+GH*.92,0,'#ff9a9a',.0090);
+ return g;}
+function buildMol(){
+ const g=new THREE.Group();
+ MBOX=new THREE.Mesh(new THREE.BoxGeometry(14,10,10),M(0x6aa3d9,{wireframe:true,transparent:true,opacity:.5}));g.add(MBOX);
+ for(let k=0;k<40;k++){const m=new THREE.Mesh(new THREE.SphereGeometry(.5,12,10),M(0x4fa3ff,{roughness:.35,emissive:0x1a3d66,emissiveIntensity:.6}));g.add(m);MH.push({m,x:rnd(-6,6),y:rnd(-4,4),z:rnd(-4,4),vx:rnd(-1,1)*2.4,vy:rnd(-1,1)*2.4,vz:rnd(-1,1)*2.4,fl:0});}
+ for(let k=0;k<21;k++){const m=new THREE.Mesh(new THREE.SphereGeometry(.4,12,10),M(0xff6a6a,{roughness:.35,emissive:0x661a1a,emissiveIntensity:.6}));m.visible=false;g.add(m);MO.push({m,x:rnd(-6,6),y:rnd(-4,4),z:rnd(-4,4),vx:rnd(-1,1)*2.8,vy:rnd(-1,1)*2.8,vz:rnd(-1,1)*2.8});}
+ labs.MS=lab(g,'',0,7.4,0,'#c8d6e5',.0095);
+ labs.MK=lab(g,'Xanh: H₂O₂   Đỏ: O₂   Chớp vàng: va chạm',0,-7.2,0,'#9ae6b4',.0085);
+ labs.MC=lab(g,'',0,-8.6,0,'#ffe08a',.0095);
+ return g;}
+const f1=n=>(Math.round(n*10)/10).toFixed(1).replace('.',',');
+const mn=s=>String(s).replace('-','−');
+const busy=()=>ST.rxPlay;
+const G1=ILB.slice(0,4),G2=['3 h','6 h','9 h','12 h'];
+function toast(m){const t=$('toast');t.textContent=m;t.style.opacity=1;clearTimeout(toast.h);toast.h=setTimeout(()=>{t.style.opacity=0;},2600);}
+function setLab(sp,text,col){if(!sp)return;if(!text||!showL){sp.visible=false;return;}sp.visible=true;relab(sp,text,col||'#c8d6e5');}
+function setView(){if(!HAS3D)return;const v=ST.mol?{th:0,ph:1.3,r:27,t:[0,0,0]}:VIEWS[0];tg.th=v.th;tg.ph=v.ph;tg.r=v.r;tg.tx=v.t[0];tg.ty=v.t[1];tg.tz=v.t[2];if(ST.mol&&mol){mol.rotation.set(0,0,0);}}
+function setTask(k){if(ST.tk[k])return;ST.tk[k]=true;save();renderRight();const t=TASKS.find(x=>x.k===k);if(t)toast('✓ Nhiệm vụ: '+t.t);}
+function eqFor(i,j,full){const dC=CV[j]-CV[i],dt=TV[j]-TV[i];return 'ΔC = '+f3(CV[j])+' − '+f3(CV[i])+' = '+mn(f3(dC))+' mol/L'+(full?'\nv_tb = −ΔC/Δt = −('+mn(f3(dC))+')/'+dt+' = '+f3(vt(i,j))+' mol/(L·h)':'');}
+function complete(i){if(ST.done[i])return;ST.done[i]=true;ST.step=Math.max(ST.step,Math.min(i+1,STEPS.length-1));const tkm={1:'a',2:'b',3:'c',4:'e',5:'f',6:'g',7:'h'};if(tkm[i])setTask(tkm[i]);toast('✓ Hoàn thành: '+STEPS[i].t);renderLeft();renderCtrl();renderRight();
+ if(i===5&&score()>=10)complete(6);
+ setTimeout(()=>{if(ST.view===i&&i+1<STEPS.length&&!busy())goView(i+1);},1100);}
+function onMeas(){renderCtrl();if(ST.meas.every(Boolean))complete(1);}
+function syncSlider(){const s=$('tsl');if(s){s.value=ST.tt;const r=$('trd');if(r)r.textContent=f1(ST.tt);}}
+function resetExp(){ST=newST(ST);setView();renderLeft();renderCtrl();renderRight();toast('Đã làm lại từ đầu (giữ họ tên, nhiệm vụ và câu trả lời).');}
+const C0=new (typeof THREE!=='undefined'?THREE.Color:function(){})(),CA=typeof THREE!=='undefined'?new THREE.Color(0x1f78d1):null,CB=typeof THREE!=='undefined'?new THREE.Color(0xdcefff):null;
+function updMacro(dt){
+ if(ST.tgt!=null){const d=ST.tgt-ST.tt,s=4*dt;if(Math.abs(d)<=s){ST.tt=ST.tgt;ST.tgt=null;if(ST.pend>=0){const p=ST.pend;ST.pend=-1;ST.meas[p]=true;onMeas();}}else ST.tt+=Math.sign(d)*s;syncSlider();}
+ const t=ST.tt,C=Cf(t),sk=STEPKEY[ST.view];
+ LIQ.material.color.copy(CA).lerp(CB,1-C);LIQ.material.opacity=.35+.4*C;
+ const nv=Math.ceil(C*BUB.length);
+ BUB.forEach((b,i)=>{b.visible=i<nv;if(!b.visible)return;const u=(tm*b.sp*.5+b.userData.ph)%1,y=.5+u*(LH-.1),r=RB+(RN-RB)*Math.min(1,y/HF);b.position.set(b.userData.ox/1.5*r*.7,y,b.userData.oz/1.5*r*.7);});
+ CUR.position.set(gx(t),gy(Cf(t)),.1);
+ for(let i=0;i<5;i++)GPT[i].visible=!!ST.meas[i]||ST.done[1];
+ const useSec=(sk==='calc'&&ST.calc1>=1)||(sk==='tab'&&ST.tsel>=0&&ST.seen[ST.tsel]);
+ SEC.visible=SECV.visible=SECH.visible=useSec;
+ if(useSec){const p=INTV[ST.tsel],i=p[0],j=p[1],x1=gx(TV[i]),y1=gy(CV[i]),x2=gx(TV[j]),y2=gy(CV[j]);seg(SEC,x1,y1,x2,y2,.14);seg(SECV,x2,y2,x2,y1,.08);seg(SECH,x1,y1,x2,y1,.08);SEC.position.z=SECV.position.z=SECH.position.z=.08;}
+ setLab(labs.clk,'⏱ t = '+f1(t)+' h','#ffe08a');
+ setLab(labs.fl,'H₂O₂ '+f3(C)+' mol/L','#8ad8ff');
+ setLab(labs.o2,'Bọt O₂: '+(C>.7?'nhiều':C>.4?'vừa':'ít')+' (minh hoạ)','#c8d6e5');
+ setLab(labs.S,sk==='data'?'Đã đo '+ST.meas.filter(Boolean).length+'/5 thời điểm':'','#c8d6e5');
+ setLab(labs.F,'','#ffe08a');
+ setLab(labs.G,useSec?'v_tb ('+ILB[ST.tsel]+') = '+f3(vt(INTV[ST.tsel][0],INTV[ST.tsel][1]))+' mol/(L·h)':'','#ff9a9a');}
+function updMol(dt){
+ if(ST.rxPlay){ST.rx=Math.min(12,ST.rx+dt*12/14);if(ST.rx>=12){ST.rxPlay=false;ST.rxDone=true;complete(5);renderCtrl();}}
+ const n=Math.round(40*Cf(ST.rx)),no=Math.floor((40-n)/2);let ev=0;
+ const B=[6.5,4.5,4.5];
+ const mv=(o,s)=>{o.x+=o.vx*dt;o.y+=o.vy*dt;o.z+=o.vz*dt;['x','y','z'].forEach((k,q)=>{if(o[k]>B[q]){o[k]=B[q];o['v'+k]*=-1;}if(o[k]<-B[q]){o[k]=-B[q];o['v'+k]*=-1;}});o.m.position.set(o.x,o.y,o.z);};
+ MH.forEach((o,i)=>{o.m.visible=i<n;if(o.m.visible){mv(o);o.fl=Math.max(0,o.fl-dt);}});
+ MO.forEach((o,i)=>{o.m.visible=i<no;if(o.m.visible)mv(o);});
+ for(let i=0;i<n;i++)for(let j=i+1;j<n;j++){const a=MH[i],b=MH[j];if(a.fl>0||b.fl>0)continue;const dx=a.x-b.x,dy=a.y-b.y,dz=a.z-b.z;if(dx*dx+dy*dy+dz*dz<1.2){a.fl=b.fl=.3;ev++;}}
+ MH.forEach(o=>{if(o.m.visible)o.m.material.emissive.setHex(o.fl>0?0xffd34a:0x1a3d66);});
+ const k=Math.min(1,dt*1.2);ST.cr=(ST.cr||0)*(1-k)+(ev/Math.max(dt,.001))*k;
+ setLab(labs.MS,'t = '+f1(ST.rx)+' h   |   H₂O₂: '+n+'/40 phân tử (C ≈ '+f3(Cf(ST.rx))+' mol/L)   |   O₂: '+no,'#c8d6e5');
+ setLab(labs.MC,'Va chạm giữa các phân tử H₂O₂ ≈ '+Math.round(ST.cr)+' lần/giây (ước lượng minh hoạ)','#ffe08a');
+ setLab(labs.MK,'Xanh: H₂O₂   Đỏ: O₂   Chớp vàng: va chạm','#9ae6b4');}
+function act(el){const a=el.dataset.act,v=+el.dataset.v;
+ if(a==='start')complete(0);
+ else if(a==='meas'){ST.tgt=TV[v];ST.pend=ST.meas[v]?-1:v;}
+ else if(a==='c1'){ST.calc1=1;ST.tsel=0;ST.eq=eqFor(0,1,false);renderCtrl();}
+ else if(a==='c2'){if(ST.calc1<1)return;ST.calc1=2;ST.eq=eqFor(0,1,true);complete(2);}
+ else if(a==='tk'){ST.tsel=v;ST.seen[v]=true;const p=INTV[v];ST.eq=eqFor(p[0],p[1],true);renderCtrl();if(INTV.every((_,k)=>ST.seen[k]))complete(3);}
+ else if(a==='g1'||a==='g2'){const q=a==='g1'?0:1,ok=(q===0?v===0:v===1);if(ST.gdone[q])return;if(ok){ST.gdone[q]=true;ST.gans[q]=v;setTask(q===0?'d':'e');toast('✔ Chính xác.');if(q===0){ST.tt=1.5;ST.tsel=0;}if(ST.gdone[0]&&ST.gdone[1])complete(4);else renderCtrl();}else toast(q===0?'Chưa đúng: so sánh 0,098; 0,069; 0,049; 0,035.':'Chưa đúng: tìm thời điểm C = 0,500 mol/L trên đồ thị.');}
+ else if(a==='play'){if(ST.rxDone){ST.rx=0;ST.rxDone=false;ST.rxPlay=true;}else ST.rxPlay=!ST.rxPlay;renderCtrl();}
+ else if(a==='rxr'){ST.rx=0;ST.rxPlay=false;ST.rxDone=false;renderCtrl();}
+ else if(a==='sa'){tab='qz';renderRight();if(!UI.r){UI.r=true;applyUI();}}
+ else if(a==='fin')complete(7);
+ else if(a==='lab'){showL=!showL;renderCtrl();}
+ else if(a==='cam')setView();
+ else if(a==='redo')resetExp();}
+function renderLeft(){ $('stl').innerHTML=STEPS.map((s,i)=>{const lock=i>ST.step,cur=i===ST.step&&!ST.done[i];return`<div class="stp${ST.done[i]?' done':''}${cur?' cur':''}${lock?' lock':''}${ST.view===i?' view':''}" data-i="${i}"><span class="si">${ST.done[i]?'✓':i+1}</span><span>${s.t}</span></div>`;}).join(''); const v=ST.view;$('it').textContent='Bước '+(v+1)+': '+STEPS[v].t;$('ibd').innerHTML=STEPS[v].d;}
+function goView(i){if(i>ST.step||busy()||i<0||i>=STEPS.length)return;ST.view=i;ST.mol=STEPKEY[i]==='mol';ST.eq='';setView();renderLeft();renderCtrl();}
+function rotMol(dx,dy){if(!mol)return;mol.rotation.y+=dx*.01;mol.rotation.x=clamp(mol.rotation.x+dy*.008,-1.2,1.2);}
+function renderCtrl(){const c=$('ctrl'),b=[],sk=STEPKEY[ST.view],i=ST.view,dn=ST.done[i];
+ const B=(a,t,v,cls,dis)=>`<button class="btn${cls?' '+cls:''}" data-act="${a}" ${v!==undefined?'data-v="'+v+'"':''} ${dis?'disabled':''}>${t}</button>`;
+ const sl=()=>b.push(`<span class="sl">t <input type="range" id="tsl" min="0" max="12" step="0.1" value="${ST.tt}"> <b id="trd">${f1(ST.tt)}</b> h</span>`);
+ if(sk==='prep')b.push(B('start',dn?'✓ Đã xem':'Bắt đầu: xem số liệu','',dn?'':'pri'));
+ else if(sk==='data'){sl();TV.forEach((t,k)=>b.push(B('meas','Đo tại t = '+t+' h',k,ST.meas[k]?'on':'')));}
+ else if(sk==='calc'){sl();b.push(B('c1','Bước 1: tính ΔC (0 → 3 h)','',ST.calc1>=1?'on':'pri'));b.push(B('c2','Bước 2: tính v_tb','',ST.calc1>=2?'on':(ST.calc1===1?'pri':''),ST.calc1<1));}
+ else if(sk==='tab'){INTV.forEach((p,k)=>b.push(B('tk',ILB[k],k,ST.seen[k]?(ST.tsel===k?'pri':'on'):'')));b.push(`<span class="sl">Đã tính: <b>${Object.keys(ST.seen).length}/6</b></span>`);}
+ else if(sk==='gr'){sl();b.push('<span class="sl">Khoảng v_tb lớn nhất:</span>');G1.forEach((t,k)=>b.push(B('g1',t,k,ST.gdone[0]?(k===0?'on':''):'',ST.gdone[0])));b.push('<span class="sl">C giảm một nửa sau:</span>');G2.forEach((t,k)=>b.push(B('g2',t,k,ST.gdone[1]?(k===1?'on':''):'',ST.gdone[1])));}
+ else if(sk==='mol'){b.push(B('play',ST.rxPlay?'⏸ Tạm dừng':(ST.rxDone?'↻ Chạy lại 0 → 12 h':'▶ Chạy 0 → 12 h'),'','pri'));b.push(B('rxr','⟲ Về t = 0'));b.push(`<span class="sl">t = <b>${f1(ST.rx)}</b> h</span>`);}
+ else if(sk==='sa'){b.push(B('sa','Mở tab Câu hỏi (13 câu trả lời ngắn)','','pri'));b.push(`<span class="sl">Đã đúng: <b>${score()}/13</b></span>`);}
+ else if(sk==='sum')b.push(B('fin',dn?'✓ Đã hoàn thành':'Hoàn thành tổng kết','',dn?'':'pri'));
+ b.push('<span class="sp"></span>');b.push(B('lab','Nhãn',undefined,showL?'on':''));b.push(B('cam','Camera'));b.push(B('redo','Làm lại','', 'warn',busy()));
+ c.innerHTML=b.join('');
+ c.querySelectorAll('[data-act]').forEach(el=>{el.onclick=()=>{if(el.disabled)return;act(el);};});
+ const s=$('tsl');if(s)s.oninput=e=>{ST.tt=+e.target.value;ST.tgt=null;ST.pend=-1;const r=$('trd');if(r)r.textContent=f1(ST.tt);};}
+function qHTML(i){const q=QZ[i],a=QA[i],d=a.done;
+ const cls=d?(a.ok?' okq':' nq'):'';
+ let h=`<div class="q${cls}"><div class="qh">Câu ${i+1} · 1 đ<span class="ty">Trả lời ngắn${q.u?' · đơn vị: '+q.u:''}</span>${d?' · '+(a.ok?'1':'0')+' đ':''}</div><div class="qt">${q.q}</div>`;
+ h+=`<div class="sar"><input class="sai" data-q="${i}" value="${String(a.val).replace(/"/g,'&quot;')}" placeholder="Nhập câu trả lời" ${d?'disabled':''}><button class="btn pri" data-sc="${i}" ${d?'disabled':''}>Chấm</button><button class="btn" data-sh="${i}" ${d?'disabled':''}>Gợi ý</button></div>`;
+ if(a.hint&&!d)h+=`<div class="ex r" style="background:#3a2f12;color:#ffe3a8">Gợi ý: ${q.h}</div>`;
+ if(!d&&a.tries===1)h+=`<div class="ex r">✘ Chưa đúng. Còn 1 lần thử.</div>`;
+ if(d)h+=`<div class="ex ${a.ok?'g':'r'}">${a.ok?'✔ Chính xác. ':'✘ Hết lượt. Đáp án: <b>'+q.ans+'</b>. '}${q.x}</div>`;
+ return h+'</div>';}
+function checkSA(i){const a=QA[i],q=QZ[i];if(a.done)return;if(!String(a.val).trim()){toast('Hãy nhập câu trả lời trước.');return;}a.tries++;let ok=false;try{ok=!!q.chk(a.val);}catch(e){}if(ok){a.ok=true;a.done=true;}else if(a.tries>=2)a.done=true;save();
+ if(score()>=10){setTask('g');if(ST.step>=6)complete(6);}renderRight();renderCtrl();}
+function renderRight(){ document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.t===tab));const rb=$('rb');
+ if(tab==='tk'){rb.innerHTML=TASKS.map(t=>`<div class="tk${ST.tk[t.k]?' ok':''}"><i>${ST.tk[t.k]?'✓':''}</i><span>${t.t}</span></div>`).join('')+`<div class="hi">Nhiệm vụ tự đánh dấu khi bạn hoàn thành. Đã làm: <b>${Object.keys(ST.tk).length}/${TASKS.length}</b>.</div>`;}
+ else if(tab==='qz'){const y=rb.scrollTop;rb.innerHTML=QZ.map((q,i)=>qHTML(i)).join('');rb.scrollTop=y;}
+ else{const h=histGet();rb.innerHTML=`<div class="rs"><label>Họ tên học sinh</label><input id="stu2" value="${ST.stu.replace(/"/g,'&quot;')}" placeholder="Nhập họ tên"></div><pre id="rtx">${resText()}</pre><button class="btn pri" id="cp">Sao chép kết quả</button> <button class="btn" id="sv">Lưu vào lịch sử</button><div style="margin-top:10px;color:var(--mu)">Lịch sử trên trình duyệt này:</div>`+(h.length?h.slice().reverse().map(x=>`<div class="hi">${x}</div>`).join(''):'<div class="hi">Chưa có.</div>')+(h.length?'<button class="btn warn" id="hc" style="margin-top:6px">Xoá lịch sử</button>':'');
+  const si=$('stu2');if(si)si.oninput=e=>{ST.stu=e.target.value;$('stu').value=ST.stu;save();$('rtx').textContent=resText();};
+  const cp=$('cp');if(cp)cp.onclick=()=>{try{navigator.clipboard.writeText(resText());toast('Đã sao chép kết quả.');}catch(e){toast('Hãy chọn và sao chép thủ công.');}};
+  const sv=$('sv');if(sv)sv.onclick=()=>{const h2=histGet();h2.push(new Date().toLocaleString('vi-VN')+' – '+(ST.stu||'(chưa nhập tên)')+': '+score()+'/'+QZ.length+' điểm, '+Object.keys(ST.tk).length+'/'+TASKS.length+' nhiệm vụ');try{localStorage.setItem(HKEY,JSON.stringify(h2));}catch(e){}renderRight();toast('Đã lưu lịch sử.');};
+  const hc=$('hc');if(hc)hc.onclick=()=>{try{localStorage.removeItem(HKEY);}catch(e){}renderRight();};}
+ $('sc').textContent=score();$('mx').textContent=QZ.length;}
+function histGet(){try{return JSON.parse(localStorage.getItem(HKEY)||'[]');}catch(e){return[];}}
+function resText(){let t='KẾT QUẢ: TỐC ĐỘ TRUNG BÌNH CỦA PHẢN ỨNG PHÂN HUỶ H₂O₂\nHọc sinh: '+(ST.stu||'(chưa nhập)')+'\nNhiệm vụ: '+TASKS.filter(t=>ST.tk[t.k]).length+'/'+TASKS.length+'\nBước đã xong: '+ST.done.filter(Boolean).length+'/'+STEPS.length+'\n';QZ.forEach((q,i)=>{const a=QA[i];t+='Câu '+(i+1)+': '+(a.done?(a.ok?'đúng':'sai'):'chưa làm')+'\n';});return t+'TỔNG ĐIỂM: '+score()+'/'+QZ.length;}
+document.addEventListener('click',e=>{const s=e.target.closest('[data-sc]');if(s){checkSA(+s.dataset.sc);return;}const h=e.target.closest('[data-sh]');if(h){QA[+h.dataset.sh].hint=true;save();renderRight();}});
+document.addEventListener('input',e=>{const t=e.target;if(t.classList&&t.classList.contains('sai')){QA[+t.dataset.q].val=t.value;save();}});
+document.addEventListener('keydown',e=>{const t=e.target;if(e.key==='Enter'&&t.classList&&t.classList.contains('sai')){checkSA(+t.dataset.q);}});
+function hud(){
+ const m=$('msgw');if(m){m.textContent=ST.msg||'';m.title=ST.msg||'';m.style.display=ST.msg?'inline-block':'none';}
+ const eb=$('eqb');if(ST.eq&&!ST.mol){eb.style.display='block';eb.textContent=ST.eq;}else eb.style.display='none';
+ $('mc').style.display='none';$('ckw').style.display='none';}
+let UI={l:true,i:true,r:true,col:false};
+function applyUI(){
+ $('lp').classList.toggle('hid',!UI.l);$('rp').classList.toggle('hid',!UI.r);$('info').classList.toggle('hid',!UI.i);$('info').classList.toggle('col',UI.col);
+ $('hl').style.display=UI.l?'none':'block';$('hr').style.display=UI.r?'none':'block';
+ $('tgl').classList.toggle('on',UI.l);$('tgr').classList.toggle('on',UI.r);$('tgi').classList.toggle('on',UI.i);$('ic').textContent=UI.col?'▸':'▾';
+ const narrow=innerWidth<900;document.documentElement.style.setProperty('--lw',(UI.l&&!narrow?246:0)+'px');document.documentElement.style.setProperty('--rw',(UI.r&&!narrow?330:0)+'px');
+ const any=UI.l||UI.r||UI.i;$('tga').classList.toggle('on',!any);$('tga').textContent=any?'⛶ Toàn cảnh':'⛶ Hiện lại';
+ try{localStorage.setItem(UKEY,JSON.stringify(UI));}catch(e){}}
+function init3D(){
+ cvs=$('cv');R=new THREE.WebGLRenderer({canvas:cvs,antialias:true});R.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+ SC=new THREE.Scene();SC.background=new THREE.Color(0x0d1520);CAM=new THREE.PerspectiveCamera(40,1,.1,200);dummy=new THREE.Object3D();
+ SC.add(new THREE.HemisphereLight(0xcfe4ff,0x1a2230,.95));const d1=new THREE.DirectionalLight(0xffffff,.85);d1.position.set(5,9,6);SC.add(d1);const d2=new THREE.DirectionalLight(0x9fc4ff,.35);d2.position.set(-6,4,-3);SC.add(d2);
+ macro=buildMacro();mol=buildMol();mol.position.set(0,0,0);mol.visible=false;SC.add(macro);SC.add(mol);
+ const pts=new Map();
+ cvs.addEventListener('pointerdown',e=>{cvs.setPointerCapture(e.pointerId);pts.set(e.pointerId,{x:e.clientX,y:e.clientY});});
+ cvs.addEventListener('pointerup',e=>pts.delete(e.pointerId));cvs.addEventListener('pointercancel',e=>pts.delete(e.pointerId));
+ cvs.addEventListener('pointermove',e=>{const p=pts.get(e.pointerId);if(!p)return;
+  if(pts.size===1){const dx=e.clientX-p.x,dy=e.clientY-p.y;if(ST.mol){rotMol(dx,dy);}else{tg.th-=dx*.008;tg.ph=clamp(tg.ph-dy*.008,.25,1.55);}}
+  else if(pts.size===2){const o=[...pts.entries()].find(([id])=>id!==e.pointerId)[1];const a0=Math.hypot(p.x-o.x,p.y-o.y),a1=Math.hypot(e.clientX-o.x,e.clientY-o.y);tg.r=clamp(tg.r*a0/Math.max(1,a1),6,45);}
+  p.x=e.clientX;p.y=e.clientY;});
+ cvs.addEventListener('wheel',e=>{e.preventDefault();tg.r=clamp(tg.r*(1+e.deltaY*.001),6,45);},{passive:false});
+ setView(0);}
+function frame(dt){
+ macro.visible=!ST.mol;mol.visible=ST.mol;
+ if(ST.mol)updMol(dt);else updMacro(dt);
+ const L=macro.userData.labs;if(L)L.forEach(s=>{s.visible=showL&&(!s.userData.when||s.userData.when());});
+ const k=1-Math.exp(-6*dt);for(const q of ['th','ph','r','tx','ty','tz'])cc[q]+=(tg[q]-cc[q])*k;
+ const sp=Math.sin(cc.ph);CAM.position.set(cc.tx+cc.r*sp*Math.sin(cc.th),cc.ty+cc.r*Math.cos(cc.ph),cc.tz+cc.r*sp*Math.cos(cc.th));CAM.lookAt(cc.tx,cc.ty,cc.tz);
+ const w=cvs.clientWidth,h=cvs.clientHeight;if(w&&h&&(cvs.width!==Math.floor(w*R.getPixelRatio())||cvs.height!==Math.floor(h*R.getPixelRatio()))){R.setSize(w,h,false);CAM.aspect=w/h;CAM.updateProjectionMatrix();}
+ R.render(SC,CAM);}
+let last=0,lastHud=0;
+function loop(now){requestAnimationFrame(loop);const dt=Math.min(.05,(now-last)/1000||.016);last=now;tm+=dt;
+ if(HAS3D){try{frame(dt);}catch(e){console.error(e);HAS3D=false;$('nogl').hidden=false;$('nogl').textContent='Lỗi hiển thị 3D: '+e.message;}}
+ if(now-lastHud>150){lastHud=now;hud();}}
+function initUI(){load();$('stu').value=ST.stu;$('stu').oninput=e=>{ST.stu=e.target.value;save();if(tab==='rs'&&$('stu2')){$('stu2').value=ST.stu;$('rtx').textContent=resText();}};
+ renderLeft();renderCtrl();renderRight();
+ $('stl').onclick=e=>{const s=e.target.closest('.stp');if(s)goView(+s.dataset.i);};
+ document.querySelector('.tabs').onclick=e=>{const b=e.target.closest('button');if(!b)return;tab=b.dataset.t;renderRight();};
+ $('rb').onclick=e=>{const o=e.target.closest('.opt');if(o){if(o.disabled)return;QA[+o.dataset.q].sel=+o.dataset.k;save();renderRight();return;}
+  const t=e.target.closest('.tfb button');if(t){if(t.disabled)return;QA[+t.dataset.q].vals[+t.dataset.j]=+t.dataset.v;renderRight();return;}
+  const c=e.target.closest('.tfc');if(c&&!c.disabled)ansTF(+c.dataset.chk);};
+ try{const u=JSON.parse(localStorage.getItem(UKEY)||'null');if(u)Object.assign(UI,u);}catch(e){}
+ let saved=null;
+ $('tl').onclick=()=>{UI.l=false;applyUI();};$('hl').onclick=()=>{UI.l=true;applyUI();};$('tgl').onclick=()=>{UI.l=!UI.l;applyUI();};
+ $('tr').onclick=()=>{UI.r=false;applyUI();};$('hr').onclick=()=>{UI.r=true;applyUI();};$('tgr').onclick=()=>{UI.r=!UI.r;applyUI();};
+ $('tgi').onclick=()=>{UI.i=!UI.i;if(UI.i)UI.col=false;applyUI();};$('ix').onclick=()=>{UI.i=false;applyUI();};$('ic').onclick=()=>{UI.col=!UI.col;applyUI();};
+ $('tga').onclick=()=>{const any=UI.l||UI.r||UI.i;if(any){saved={l:UI.l,r:UI.r,i:UI.i};UI.l=UI.r=UI.i=false;}else{const sv=saved||{l:true,r:true,i:true};UI.l=sv.l;UI.r=sv.r;UI.i=sv.i;if(!(UI.l||UI.r||UI.i))UI.l=UI.r=UI.i=true;}applyUI();};
+ addEventListener('resize',applyUI);applyUI();}
+function boot(){if(booted)return;booted=true;HAS3D=(typeof THREE!=='undefined');
+ if(HAS3D){try{init3D();}catch(e){console.error(e);HAS3D=false;}}
+ if(!HAS3D){$('nogl').hidden=false;$('nogl').textContent='Không tải được Three.js hoặc WebGL (cần Internet). Phần bước, nhiệm vụ và câu hỏi vẫn dùng được.';}
+ initUI();requestAnimationFrame(loop);}
+window.addEventListener('load',()=>setTimeout(boot,50));
+</script><script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/vce701823e78c4301a35b7e07294d87301792088814092" integrity="sha512-UKNk8GbxkABxKcXYuLkO16EleLGUkcvJWtpSNmExE0Too3ZaFAxTscNWEc1OdAv5/BikHawapSCaiD2XCmp+Bw==" data-cf-beacon='{"version":"2024.11.0","token":"32025ce925814db6adf135e23f853254","r":1,"spa":2}' crossorigin="anonymous"></script>
+</body></html>
